@@ -1,0 +1,36 @@
+header {
+    width: 100%;
+    height: 30px;
+    position: fixed;
+    z-index: 1000;
+
+    .header_wrap {
+        height: 52px;
+        display: flex;
+        align-items: center;
+        padding: 0 16px;
+        background: var(--bg-main);
+        border-bottom: 1px solid #333;
+
+        .hamburger_btn img {
+            width: 26px;
+            transition: transform 0.25s ease;
+        }
+
+        .hamburger_btn img.rotated {
+            transform: rotate(90deg);
+        }
+
+        &>button {
+            width: 20px;
+            height: 20px;
+            border-radius: 5px;
+            margin: 0 5px 0 0;
+            padding: 0;
+
+            &:hover {
+                background-color: #3a3a3a;
+            }
+        }
+    }
+}

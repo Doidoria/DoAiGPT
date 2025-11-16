@@ -1,0 +1,21 @@
+/* 오른쪽 전체 영역 */
+.content_wrap {
+    margin-left: 240px; /* 펼친 사이드바 */
+    height: 100vh;
+    display: flex;
+    flex-direction: column;
+    transition: margin-left 0.25s ease;
+}
+
+/* 접힌 사이드바 */
+.layout.collapsed .content_wrap {
+    margin-left: 72px; /* 접힘 너비 */
+}
+
+/* 헤더 fixed 때문에 메인이 가려지지 않도록 */
+.content_wrap .main {
+    padding-top: 52px; /* Header 높이 */
+    flex: 1;
+    overflow-y: auto;
+    height: calc(100vh - 52px);
+}

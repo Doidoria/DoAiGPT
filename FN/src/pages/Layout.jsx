@@ -3,27 +3,32 @@ import { useState } from 'react';
 import Aside from './Layout/Aside'
 import Header from './Layout/Header'
 import Footer from './Layout/Footer'
+import '../css/Layout.scss'
 
-const Layout = ({children}) => {
+const Layout = ({ children }) => {
   const [activeChatId, setActiveChatId] = useState(null);
-  const [chatRooms, setChatRooms] = useState({}); 
+  const [chatRooms, setChatRooms] = useState({}); // 채팅방
+  const [isCollapsed, setIsCollapsed] = useState(false); // 사이드바 접힘 상태
 
   const chatProps = {
     activeChatId,
     setActiveChatId,
     chatRooms,
     setChatRooms,
+    isCollapsed,
+    setIsCollapsed
   };
 
   return (
-    <div className="layout">
+    <div className={`layout ${isCollapsed ? "collapsed" : ""}`}>
       <Aside {...chatProps} />
-      <Header/>
-      <main className='main'>
-        <Outlet context={chatProps} /> 
-        {children}
-      </main>
-      <Footer/>
+      <div className="content_wrap">
+        <Header isCollapsed={isCollapsed} setIsCollapsed={setIsCollapsed} />
+        <main className="main">
+          <Outlet context={chatProps} />
+          {children}
+        </main>
+      </div>
     </div>
   )
 }
