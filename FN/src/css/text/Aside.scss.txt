@@ -8,6 +8,12 @@
     transition: width 0.25s ease;
     overflow: hidden;
 
+    .logo {
+        display: flex;
+        justify-content: center;
+        align-items: center;
+    }
+
     &.expanded {
         width: 200px;
     }
@@ -19,13 +25,26 @@
     .menu_wrap {
         display: flex;
         flex-direction: column;
-        height: 100%;
-        padding-top: 50px;
+        height: 95%;
+        padding-top: 20px;
         justify-content: space-between;
-        align-items: left;
 
-        .menu_bottom_wrap {
-            margin-bottom: 10px;
+        .chat_list_container {
+            display: flex;
+            flex-direction: column;
+            gap: 5px;
+
+            .chat_title {
+                margin: 10px 0 10px 15px;
+                color: var(--chat-title);
+                font-size: 14px;
+                font-weight: 600;
+
+                span {
+                    padding-bottom: 3px;
+                    border-bottom: 2px solid var(--chat-title-line);
+                }
+            }
         }
     }
 
@@ -65,6 +84,17 @@
             color: var(--text-secondary);
             white-space: nowrap;
             transition: opacity 0.25s ease;
+        }
+        
+    }
+    .settings{
+        display: flex;
+        justify-content: center;
+        width: 40px;
+        color: var(--btn-bg);
+
+        span{
+            font-size: 25px;
         }
     }
 

@@ -1,5 +1,5 @@
 import '../css/main.scss';
-import { useState, useRef, useCallback } from 'react';
+import { useState, useRef, useEffect, useCallback } from 'react';
 import { useOutletContext, useNavigate } from 'react-router-dom';
 import useAutosizeTextarea from '../component/useAutosizeTextarea';
 import axios from 'axios';
@@ -15,10 +15,11 @@ const Home = () => {
     } = useOutletContext();
 
     const navigate = useNavigate();
-
     const [message, setMessage] = useState('');
     const [loading, setLoading] = useState(false);
     const textareaRef = useRef(null);
+    const [files, setFiles] = useState([]);
+    const [isDragging, setIsDragging] = useState(false);
 
     useAutosizeTextarea(textareaRef, message);
 
@@ -62,6 +63,7 @@ const Home = () => {
         }
     };
 
+    // ChatRoom 전달
     const handleSubmit = (e) => {
         e.preventDefault();
         if (!message.trim() || loading) return;
@@ -71,40 +73,114 @@ const Home = () => {
 
         setMessage('');
         sendMessage(userMessage, chatId);
-        navigate(`/chat/${chatId}`);
+        navigate(`/chat/${chatId}`, {
+            state: {
+                initialFiles: files   // ChatRoom으로 파일 전달
+            }
+        });
+    };
+
+    const handleFileUpload = (e) => {
+        const newFiles = Array.from(e.target.files);
+        const filtered = newFiles.filter(file => {
+            if (file.size > 5 * 1024 * 1024) {
+                alert(`${file.name} 은(는) 5MB를 초과했습니다.`);
+                return false;
+            }
+            return true;
+        });
+
+        setFiles(prev => [...prev, ...filtered]);
+    };
+
+    const removeFile = (index) => {
+        setFiles(prev => prev.filter((_, i) => i !== index));
+    };
+
+    const handleKeyDown = (e) => {
+        if (e.key === "Enter" && !e.shiftKey) {
+            e.preventDefault();
+            handleSubmit(e);
+        }
     };
 
     return (
         <section className="section_wrap">
             <div className="main_body_wrap">
-                <div className="input_select_wrap">
-                    <form onSubmit={handleSubmit}>
-                        {/* ... (입력창 UI) ... */}
-                        <div className="inst_top_wrap">
-                            <label htmlFor="myTextarea" className="inst_label">
-                                <textarea name="message" id="myTextarea" ref={textareaRef}
-                                    value={message} onChange={handleInputChange}
-                                    placeholder="궁금하신 내용을 입력해주세요"
-                                    style={{ resize: 'none' }} />
-                                <input type="submit" style={{ display: 'none' }} />
-                            </label>
+                <div className='logo' style={{ marginBottom: '5px' }}>
+                    <h1>DoAi</h1>
+                </div>
+                <div className={`input_select_wrap ${isDragging ? "dragging" : ""}`}
+                    onDragOver={(e) => { e.preventDefault(); setIsDragging(true); }}
+                    onDragLeave={() => setIsDragging(false)}
+                    onDrop={(e) => {
+                        e.preventDefault();
+                        setIsDragging(false);
+                        const newFiles = Array.from(e.dataTransfer.files);
+                        newFiles.forEach(file => {
+                            if (file.size > 5 * 1024 * 1024) {
+                                alert("5MB 이하 파일만 업로드할 수 있습니다.");
+                                return;
+                            }
+                        });
+                        setFiles(prev => [...prev, ...newFiles]);
+                    }}>
+                    {/* 파일 미리보기 */}
+                    {files.length > 0 && (
+                        <div className="file_preview_area">
+                            {files.map((file, idx) => {
+                                const isImage = file.type.startsWith("image/");
+                                const previewURL = isImage ? URL.createObjectURL(file) : null;
+                                const type = file.type;
+                                let icon = "/images/icon_file.png";
+                                if (type.includes("pdf")) icon = "/images/icon_pdf.png";
+                                else if (type.includes("word") || type.includes("msword") || type.includes("doc"))
+                                    icon = "/images/icon_doc.png";
+                                else if (type.includes("excel") || type.includes("spreadsheet") || type.includes("xls"))
+                                    icon = "/images/icon_excel.png";
+                                else if (type.includes("hwp"))
+                                    icon = "/images/icon_hwp.png";
+                                return (
+                                    <div className="file_item" key={idx}>
+                                        {isImage ? (
+                                            <img className="thumb" src={previewURL} alt={file.name} />
+                                        ) : (
+                                            <img className="file_icon" src={icon} alt="file icon" />
+                                        )}
+                                        <span>{file.name}</span>
+                                        <button onClick={() => removeFile(idx)}>×</button>
+                                    </div>
+                                );
+                            })}
                         </div>
-                        <div className="inst_bottom_wrap">
-                            <div className="left_btn_wrap">
-                                <div className="inst_btn">
-                                    <button shape="circle" type="button" className='fileupload_btn' style={{ cursor: 'pointer' }}>
-                                        <span className="material-symbols-outlined">add</span>
-                                    </button>
-                                </div>
-                            </div>
-                            <div className="right_btn_wrap">
-                                <div className="inst_btn">
-                                    <button shape="circle" type="submit" className='submit_btn' style={{ cursor: 'pointer' }}
-                                        disabled={!message.trim() || loading}>
-                                        <span className="material-symbols-outlined">upload_2</span>
-                                    </button>
-                                </div>
-                            </div>
+                    )}
+                    <form onSubmit={handleSubmit}>
+                        <div className="input_row">
+                            {/* 파일 업로드 버튼 */}
+                            <label className="add_btn">
+                                <span className="material-symbols-outlined">attach_file</span>
+                                <input type="file" multiple style={{ display: "none" }} onChange={handleFileUpload} />
+                            </label>
+
+                            {/* 입력창 */}
+                            <textarea
+                                name="message"
+                                ref={textareaRef}
+                                value={message}
+                                onChange={handleInputChange}
+                                onKeyDown={handleKeyDown}
+                                placeholder="적당히 물어봐주세요."
+                                style={{ resize: "none" }}
+                            />
+
+                            {/* 전송 버튼 */}
+                            <button
+                                type="submit"
+                                className="send_btn"
+                                disabled={!message.trim() || loading}
+                            >
+                                <span className="material-symbols-outlined">send</span>
+                            </button>
                         </div>
                     </form>
                 </div>

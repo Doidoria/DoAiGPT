@@ -86,99 +86,156 @@
         }
     }
 
+    .input_select_wrap.dragging {
+        border: 2px dashed #888;
+        background: rgba(255, 255, 255, 0.04);
+    }
+
     .input_select_wrap {
         width: 100%;
-        background-color: var(--bg-sub);
+        padding: 16px;
         border-radius: 20px;
-        padding: 30px 30px 20px 30px;
-        margin-bottom: 30px;
+        flex-shrink: 0;
         display: flex;
         flex-direction: column;
-        flex-shrink: 0;
+        gap: 12px;
+        margin-bottom: 100px;
 
-        .inst_top_wrap {
-            flex-grow: 1;
-        }
-
-        .inst_label {
+        .file_preview_area {
             display: flex;
-            min-height: 50px;
-            align-items: center;
+            flex-wrap: wrap;
+            gap: 8px;
 
-            &>textarea {
-                width: 100%;
-                min-height: 24px;
-                max-height: 500px;
-                border: none;
-                background: transparent;
-                color: var(--text-primary);
-                font-size: 15px;
-                flex: 1;
-                resize: none;
-                overflow-y: auto;
-
-                &::placeholder {
-                    color: var(--text-secondary);
-                }
-            }
-        }
-
-        .inst_bottom_wrap {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            padding-top: 10px;
-
-            .right_btn_wrap {
-                display: flex;
-                gap: 15px;
-            }
-
-            .inst_btn {
-                width: 30px;
-                height: 30px;
-                border-radius: 8px;
-                background: transparent;
+            /* 파일 미리보기 */
+            .file_item {
                 display: flex;
                 align-items: center;
-                justify-content: center;
-                transition: background-color 0.15s ease;
+                background: var(--bg-input);
+                padding: 6px 10px;
+                border-radius: 8px;
+                font-size: 13px;
+                color: var(--text-primary);
+                border: 1px solid rgba(255, 255, 255, 0.08);
+                gap: 6px;
 
-                @mixin btn-style{
-                    display: flex;
-                    align-items: center;
-                    justify-content: center;  
-                    color: var(--btn-bg);
-                    border-radius: 5px;
-                    border: none;
+                .thumb {
+                    width: 35px;
+                    height: 35px;
+                    object-fit: cover;
+                    border-radius: 6px;
+                    margin-right: 6px;
                 }
 
-                .fileupload_btn{
-                    @include btn-style;
-                    padding: 1px;
+                .file_icon {
+                    width: 24px;
+                    opacity: 0.7;
+                    margin-right: 6px;
+                }
+
+                button {
                     background: transparent;
-                }
-                
-                .submit_btn{
-                    @include btn-style;
-                    padding: 2px;
-                    background-color: var(--submit-btn);
-                }
+                    border: none;
+                    font-size: 14px;
+                    cursor: pointer;
+                    color: var(--text-primary);
 
-                &:hover {
-                    background-color: rgba(255, 255, 255, 0.08);
-                }
-
-                img {
-                    opacity: 0.85;
-                    transition: opacity 0.2s ease;
-                    width: 16px;
-                }
-
-                &:hover img {
-                    opacity: 1;
+                    &:hover {
+                        color: #ff6b6b;
+                    }
                 }
             }
+        }
+    }
+
+    /* ChatGPT input row */
+    .input_row {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        padding: 12px 16px;
+        background: var(--bg-input);
+        border-radius: 16px;
+
+        box-shadow:
+            0 0 0 1px rgba(255, 255, 255, 0.08),
+            0 4px 8px rgba(0, 0, 0, 0.12),
+            0 8px 20px rgba(0, 0, 0, 0.18);
+
+        transition: box-shadow 0.2s ease;
+
+        &:focus-within {
+            box-shadow:
+                0 0 0 1px rgba(255, 255, 255, 0.15),
+                0 6px 14px rgba(0, 0, 0, 0.16),
+                0 10px 26px rgba(0, 0, 0, 0.22);
+        }
+    }
+
+    .add_btn {
+        width: 36px;
+        height: 36px;
+        border-radius: 8px;
+        background: transparent;
+        border: none;
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+
+        .material-symbols-outlined {
+            font-size: 24px;
+            color: var(--text-secondary);
+        }
+
+        &:hover {
+            background-color: rgba(255, 255, 255, 0.06);
+        }
+    }
+
+    textarea {
+        flex: 1;
+        min-height: 30px;
+        max-height: 200px;
+        border: none;
+        background: transparent;
+        color: var(--text-primary);
+        font-size: 15px;
+        padding: 6px 0;
+        resize: none;
+        overflow-y: auto;
+
+        &::placeholder {
+            color: var(--text-secondary);
+        }
+
+        &:empty {
+            height: 30px !important;
+        }
+    }
+
+    .send_btn {
+        width: 36px;
+        height: 36px;
+        border-radius: 8px;
+        background-color: var(--submit-btn);
+        border: none;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        cursor: pointer;
+
+        .material-symbols-outlined {
+            font-size: 22px;
+            color: #fff;
+        }
+
+        &:disabled {
+            opacity: 0.4;
+            cursor: default;
+        }
+
+        &:not(:disabled):hover {
+            background-color: rgba(255, 255, 255, 0.15);
         }
     }
 }

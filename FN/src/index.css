@@ -3,6 +3,11 @@ html, body, #root, .App {
     height: 100%;
     min-height: 100vh;
 }
+a{text-decoration: none;}
+
+.logo{
+    color: var(--text-primary);
+}
 
 :root {
     --bg-main: #202020;
@@ -16,6 +21,8 @@ html, body, #root, .App {
     --aside-hover: #3a3a3a;
     --btn-bg:#fff;
     --submit-btn:#ce5bab;
+    --chat-title:#969696;
+    --chat-title-line:#292929;
 }
 
 body.theme-light {
@@ -30,6 +37,8 @@ body.theme-light {
     --aside-hover: #e6e6e6;
     --btn-bg:#000;
     --submit-btn:#ce5bab;
+    --chat-title:#808080;
+    --chat-title-line:#ececec;
 }
 
 .layout {

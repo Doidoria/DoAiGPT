@@ -3,19 +3,21 @@ import { useState, useEffect } from 'react';
 import Aside from './Layout/Aside';
 import Header from './Layout/Header';
 import Footer from './Layout/Footer';
+import SettingModal from "./SettingModal";
 import '../css/Layout.scss';
 
 const Layout = ({ children }) => {
   const [activeChatId, setActiveChatId] = useState(null);
   const [chatRooms, setChatRooms] = useState({});
   const [isCollapsed, setIsCollapsed] = useState(false);
+  const [showSettingModal, setShowSettingModal] = useState(false);
 
   /* 앱 로드 시 LocalStorage 불러오기 */
   useEffect(() => {
     const saved = localStorage.getItem("chatRooms");
     if (saved) {
-        const parsed = JSON.parse(saved);
-        setChatRooms(parsed);
+      const parsed = JSON.parse(saved);
+      setChatRooms(parsed);
     }
   }, []);
 
@@ -30,7 +32,9 @@ const Layout = ({ children }) => {
     chatRooms,
     setChatRooms,
     isCollapsed,
-    setIsCollapsed
+    setIsCollapsed,
+    showSettingModal,
+    setShowSettingModal
   };
 
   return (
@@ -42,7 +46,10 @@ const Layout = ({ children }) => {
           <Outlet context={chatProps} />
           {children}
         </main>
-        <Footer />
+        {/* Setting Modal */}
+        {showSettingModal && (
+          <SettingModal setShowSettingModal={setShowSettingModal} />
+        )}
       </div>
     </div>
   );

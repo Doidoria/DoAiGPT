@@ -1,0 +1,338 @@
+@mixin flex-center-col {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+}
+
+@mixin chat-bubble($bg) {
+    background-color: $bg;
+    padding: 12px 18px;
+    border-radius: 18px;
+    max-width: 65%;
+    line-height: 1.6;
+    font-size: 16px;
+}
+
+.section_wrap {
+    display: flex;
+    flex-direction: column;
+    width: 100%;
+    height: 100%;
+}
+
+.ChatRoom_body_wrap {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    width: 720px;
+    margin: 0 auto;
+    padding: 30px 0;
+    height: 100%;
+
+    .material-symbols-outlined {
+        font-variation-settings:
+            'FILL' 0,
+            'wght' 400,
+            'GRAD' 0,
+            'opsz' 20
+    }
+
+    .chat_history_wrap {
+        width: 100%;
+        flex-grow: 1;
+        overflow-y: auto;
+
+        .chat_message {
+            display: flex;
+            width: 100%;
+            margin-bottom: 20px;
+
+            &>strong {
+                font-weight: bold;
+                margin-right: 10px;
+                color: var(--text-secondary);
+            }
+        }
+
+        .chat_user {
+            justify-content: flex-end;
+
+            &>strong {
+                order: 2;
+                margin-left: 10px;
+                margin-right: 0;
+            }
+
+            &>div {
+                @include chat-bubble(var(--bubble-user));
+                color: var(--text-primary);
+            }
+        }
+
+        .chat_ai {
+            justify-content: flex-start;
+
+            &>div {
+                @include chat-bubble(var(--bubble-ai));
+                color: var(--text-primary);
+            }
+
+            &.loading {
+                opacity: 0.7;
+                font-style: italic;
+            }
+        }
+    }
+
+    .input_select_wrap.dragging {
+        border: 2px dashed #888;
+        background: rgba(255, 255, 255, 0.04);
+    }
+
+    // ChatGPT 입력창 영역
+    .input_select_wrap {
+        width: 100%;
+        padding: 16px;
+        border-radius: 20px;
+        flex-shrink: 0;
+        display: flex;
+        flex-direction: column;
+        gap: 12px;
+        margin-bottom: 100px;
+
+        .file_preview_area {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+
+            /* 파일 미리보기 */
+            .file_item {
+                display: flex;
+                align-items: center;
+                background: var(--bg-input);
+                padding: 6px 10px;
+                border-radius: 8px;
+                font-size: 13px;
+                color: var(--text-primary);
+                border: 1px solid rgba(255, 255, 255, 0.08);
+                gap: 6px;
+
+                .thumb {
+                    width: 35px;
+                    height: 35px;
+                    object-fit: cover;
+                    border-radius: 6px;
+                    margin-right: 6px;
+                }
+
+                .file_icon {
+                    width: 24px;
+                    opacity: 0.7;
+                    margin-right: 6px;
+                }
+
+                button {
+                    background: transparent;
+                    border: none;
+                    font-size: 14px;
+                    cursor: pointer;
+                    color: var(--text-primary);
+
+                    &:hover {
+                        color: #ff6b6b;
+                    }
+                }
+            }
+        }
+
+        // ChatGPT 스타일 입력 Row
+        .input_row {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 12px 16px;
+            background: var(--bg-input);
+            border-radius: 16px;
+
+            box-shadow:
+                0 0 0 1px rgba(255, 255, 255, 0.08),
+                0 4px 8px rgba(0, 0, 0, 0.12),
+                0 8px 20px rgba(0, 0, 0, 0.18);
+            transition: box-shadow 0.2s ease;
+
+            &:focus-within {
+                box-shadow:
+                    0 0 0 1px rgba(255, 255, 255, 0.15),
+                    0 6px 14px rgba(0, 0, 0, 0.16),
+                    0 10px 26px rgba(0, 0, 0, 0.22);
+            }
+        }
+
+        // 버튼
+        .add_btn {
+            width: 36px;
+            height: 36px;
+            border-radius: 8px;
+            background: transparent;
+            border: none;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+
+            .material-symbols-outlined {
+                font-size: 24px;
+                color: var(--text-secondary);
+            }
+
+            &:hover {
+                background-color: rgba(255, 255, 255, 0.06);
+            }
+        }
+
+        textarea {
+            flex: 1;
+            min-height: 30px;
+            max-height: 200px;
+            border: none;
+            background: transparent;
+            color: var(--text-primary);
+            font-size: 15px;
+            padding: 6px 0;
+            resize: none;
+            overflow-y: auto;
+
+            &::placeholder {
+                color: var(--text-secondary);
+            }
+
+            &:empty {
+                height: 30px !important;
+            }
+        }
+
+        .send_btn {
+            width: 36px;
+            height: 36px;
+            border-radius: 8px;
+            background-color: var(--submit-btn);
+            border: none;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+
+            .material-symbols-outlined {
+                font-size: 22px;
+                color: #fff;
+            }
+
+            &:disabled {
+                opacity: 0.4;
+                cursor: default;
+            }
+
+            &:not(:disabled):hover {
+                background-color: rgba(255, 255, 255, 0.15);
+            }
+        }
+    }
+}
+
+/* 3-dot typing animation */
+.typing_dots {
+    display: flex;
+    gap: 4px;
+
+    span {
+        width: 6px;
+        height: 6px;
+        border-radius: 50%;
+        background: var(--text-secondary);
+        opacity: 0.4;
+        animation: typingBlink 1s infinite ease-in-out;
+    }
+
+    span:nth-child(2) {
+        animation-delay: 0.2s;
+    }
+
+    span:nth-child(3) {
+        animation-delay: 0.4s;
+    }
+}
+
+@keyframes typingBlink {
+    0% {
+        opacity: .3;
+        transform: translateY(0);
+    }
+
+    40% {
+        opacity: 1;
+        transform: translateY(-3px);
+    }
+
+    100% {
+        opacity: .3;
+        transform: translateY(0);
+    }
+}
+
+/* AI 메시지 복사 버튼 */
+.chat_ai .bubble {
+    @include chat-bubble(var(--bubble-ai));
+    position: relative;
+}
+
+.chat_user .bubble {
+    @include chat-bubble(var(--bubble-user));
+}
+
+.copy_btn {
+    position: absolute;
+    top: 6px;
+    right: 6px;
+
+    background: transparent;
+    border: none;
+    cursor: pointer;
+    padding: 4px;
+    border-radius: 6px;
+    opacity: 0.7;
+
+    .material-symbols-outlined {
+        font-size: 18px;
+        color: var(--text-secondary);
+    }
+
+    &:hover {
+        background: rgba(255, 255, 255, 0.1);
+        opacity: 1;
+    }
+}
+
+/* 코드블록 */
+.code_block {
+    background: #111;
+    border-radius: 10px;
+    padding: 10px;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    margin: 6px 0;
+    overflow-x: auto;
+
+    code {
+        font-family: "JetBrains Mono", monospace;
+        font-size: 13px;
+        white-space: pre;
+        display: block;
+    }
+}
+
+.code_lang {
+    text-align: right;
+    font-size: 11px;
+    color: #aaa;
+}
