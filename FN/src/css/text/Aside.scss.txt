@@ -69,6 +69,7 @@
             justify-content: center;
             color: var(--btn-bg);
             padding-left: 9px;
+            flex-shrink: 0;
             transition: width 0.25s ease, height 0.25s ease;
 
             .material-symbols-outlined {
@@ -83,7 +84,7 @@
         p {
             flex: 1;
             min-width: 0;
-            max-width: 120px;
+            max-width: 150px;
             overflow: hidden;
             text-overflow: ellipsis;
             font-size: 14px;
@@ -91,7 +92,6 @@
             color: var(--text-secondary);
             transition: opacity 0.25s ease;
         }
-
     }
 
     .settings {

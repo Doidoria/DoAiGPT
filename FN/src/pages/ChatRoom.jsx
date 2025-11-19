@@ -14,10 +14,16 @@ const TypingDots = () => (
     </div>
 );
 
+/* URL 추출 (첫 번째 링크만) */
+const extractFirstUrl = (text) => {
+    if (!text) return null;
+    const match = text.match(/https?:\/\/[^\s)]+/);
+    return match ? match[0] : null;
+};
+
 /* 코드블록 및 일반 텍스트 파싱 (복사 버튼 포함) */
 const renderRichText = (text, onCopyCode) => {
     if (!text) return null;
-
     const parts = text.split(/```/);
 
     return parts.map((part, idx) => {
@@ -69,6 +75,7 @@ const ChatRoom = () => {
     const [files, setFiles] = useState([]);
     const [isDragging, setIsDragging] = useState(false);
     const [previewImage, setPreviewImage] = useState(null);
+    const [showScrollDown, setShowScrollDown] = useState(false);
 
     const initialFiles = location.state?.initialFiles || [];
 
@@ -106,6 +113,30 @@ const ChatRoom = () => {
             scrollRef.current.scrollTop = scrollRef.current.scrollHeight;
         }
     }, [currentChats]);
+
+    // 스크롤 상태 감지 (맨 아래 여부)
+    useEffect(() => {
+        const el = scrollRef.current;
+        if (!el) return;
+
+        const handleScroll = () => {
+            const isBottom = el.scrollHeight - el.scrollTop <= el.clientHeight + 20;
+            setShowScrollDown(!isBottom);
+        };
+
+        el.addEventListener("scroll", handleScroll);
+        return () => el.removeEventListener("scroll", handleScroll);
+    }, []);
+
+    // 스크롤 맨 아래로
+    const scrollToBottom = () => {
+        if (scrollRef.current) {
+            scrollRef.current.scrollTo({
+                top: scrollRef.current.scrollHeight,
+                behavior: "smooth"
+            });
+        }
+    };
 
     const handleInputChange = useCallback((e) => {
         setMessage(e.target.value);
@@ -149,8 +180,8 @@ const ChatRoom = () => {
     // AI 답변 스트리밍 효과
     const streamAiResponse = (chatId, fullText) => {
         let index = 0;
-        const step = 2; // 한 번에 추가되는 글자 수
-        const delay = 20; // 간격(ms)
+        const step = 3;  // 한 번에 추가되는 글자 수
+        const delay = 15; // 간격(ms)
 
         const intervalId = setInterval(() => {
             index += step;
@@ -166,7 +197,7 @@ const ChatRoom = () => {
                 const lastIndex = history.length - 1;
                 const lastMsg = { ...history[lastIndex] };
 
-                if (lastMsg.role !== 'ai') {
+                if (lastMsg.role !== 'ai' && lastMsg.role !== 'assistant') {
                     clearInterval(intervalId);
                     return prevRooms;
                 }
@@ -175,6 +206,7 @@ const ChatRoom = () => {
                 lastMsg.loading = false;
                 history[lastIndex] = lastMsg;
 
+                // 완료 시 인터벌 정리
                 if (index >= fullText.length) {
                     clearInterval(intervalId);
                 }
@@ -187,6 +219,9 @@ const ChatRoom = () => {
                     },
                 };
             });
+
+            // 매 스텝마다 스크롤 아래로
+            scrollToBottom();
         }, delay);
     };
 
@@ -259,7 +294,15 @@ const ChatRoom = () => {
         if (loading) return;
         if (!message.trim() && files.length === 0) return;
 
-        const userMessage = message.trim();
+        let userMessage = message.trim();
+
+        // 파일이 있을 경우, 메시지에 파일 이름들을 같이 포함
+        if (files.length > 0) {
+            const fileNames = files.map((f) => f.name).join(', ');
+            const fileText = `\n\n[첨부 파일: ${fileNames}]`;
+            userMessage = userMessage ? userMessage + fileText : fileText;
+        }
+
         setMessage('');
         setFiles([]);
 
@@ -371,162 +414,171 @@ const ChatRoom = () => {
             return <div className="empty_state">채팅 기록이 없습니다.</div>;
         }
 
-        return currentChats.map((chat, index) => (
-            <div
-                key={index}
-                className={`chat_message chat_${chat.role} ${chat.loading ? 'loading' : ''
-                    }`}
-            >
-                <strong>{chat.role === 'user' ? '나' : 'AI'}</strong>
-                <div className="bubble">
-                    {chat.loading ? (
-                        <TypingDots />
-                    ) : (
-                        renderRichText(chat.content, handleCopy)
-                    )}
+        return currentChats.map((chat, index) => {
+            const link = !chat.loading ? extractFirstUrl(chat.content) : null;
+
+            return (
+                <div
+                    key={index}
+                    className={`chat_message chat_${chat.role} ${chat.loading ? 'loading' : ''}`}>
+                    <strong>{chat.role === 'user' ? '나' : 'AI'}</strong>
+                    <div className="bubble">
+                        {chat.loading ? (
+                            <TypingDots />
+                        ) : (
+                            <>
+                                {renderRichText(chat.content, handleCopy)}
+                                {link && (
+                                    <a
+                                        className="chat_link_btn"
+                                        href={link}
+                                        target="_blank"
+                                        rel="noopener noreferrer"
+                                    >
+                                        바로가기
+                                    </a>
+                                )}
+                            </>
+                        )}
+                    </div>
                 </div>
-            </div>
-        ));
+            );
+        });
     };
 
     return (
         <section className="section_wrap">
             <div className="ChatRoom_body_wrap">
-                {/* 상단 툴바 - 대화 요약 버튼 */}
-                <div className="chat_toolbar">
-                    <button
-                        type="button"
-                        onClick={handleSummarize}
-                        disabled={loading || !currentChats || currentChats.length === 0}
-                    >
-                        📝 대화 요약
-                    </button>
-                </div>
-
-                {/* 대화 기록 */}
-                <div className="chat_history_wrap" ref={scrollRef}>
-                    {renderChats()}
-                </div>
-
-                {/* 입력/파일 영역 */}
-                <div
-                    className={`input_select_wrap ${isDragging ? 'dragging' : ''}`}
-                    onDragOver={(e) => {
-                        e.preventDefault();
-                        setIsDragging(true);
-                    }}
-                    onDragLeave={() => setIsDragging(false)}
-                    onDrop={(e) => {
-                        e.preventDefault();
-                        setIsDragging(false);
-                        const dropped = Array.from(e.dataTransfer.files || []);
-                        const filtered = dropped.filter((file) => {
-                            if (file.size > 5 * 1024 * 1024) {
-                                alert('5MB 이하 파일만 업로드할 수 있습니다.');
-                                return false;
-                            }
-                            return true;
-                        });
-                        setFiles((prev) => [...prev, ...filtered]);
-                    }}
-                >
-                    {/* 파일 미리보기 */}
-                    {files.length > 0 && (
-                        <div className="file_preview_area">
-                            {files.map((file, idx) => {
-                                const isImage = file.type.startsWith('image/');
-                                const previewURL = isImage ? URL.createObjectURL(file) : null;
-                                const type = file.type;
-                                let icon = '/images/icon_file.png';
-                                if (type.includes('pdf')) icon = '/images/icon_pdf.png';
-                                else if (
-                                    type.includes('word') ||
-                                    type.includes('msword') ||
-                                    type.includes('doc')
-                                )
-                                    icon = '/images/icon_doc.png';
-                                else if (
-                                    type.includes('excel') ||
-                                    type.includes('spreadsheet') ||
-                                    type.includes('xls')
-                                )
-                                    icon = '/images/icon_excel.png';
-                                else if (type.includes('hwp')) icon = '/images/icon_hwp.png';
-
-                                return (
-                                    <div className="file_item" key={idx}>
-                                        {isImage ? (
-                                            <img
-                                                className="thumb"
-                                                src={previewURL}
-                                                alt={file.name}
-                                                onClick={() => setPreviewImage(previewURL)}
-                                                style={{ cursor: 'pointer' }}
-                                            />
-                                        ) : (
-                                            <img className="file_icon" src={icon} alt="file icon" />
-                                        )}
-                                        <span className="file_name">{file.name}</span>
-                                        <button
-                                            type="button"
-                                            className="file_remove_btn"
-                                            onClick={() => removeFile(idx)}
-                                        >
-                                            ×
-                                        </button>
-                                    </div>
-                                );
-                            })}
-                        </div>
+                <div className="chat_summary_fixed">
+                    {showScrollDown && (
+                        <button className="scroll_down_btn" onClick={scrollToBottom}>
+                            <span className="material-symbols-outlined">arrow_downward</span>
+                        </button>
                     )}
+                </div>
+                <div className="chat_container">
+                    {/* 상단 툴바 - 대화 요약 버튼 */}
+                    <div className="chat_toolbar">
+                        <button
+                            type="button"
+                            onClick={handleSummarize}
+                            disabled={loading || !currentChats || currentChats.length === 0}>
+                            📝 대화 요약
+                        </button>
+                    </div>
+                    {/* 대화 기록 */}
+                    <div className="chat_history_wrap" ref={scrollRef}>
+                        {renderChats()}
+                    </div>
+                    {/* 입력/파일 영역 */}
+                    <div
+                        className={`input_select_wrap ${isDragging ? 'dragging' : ''}`}
+                        onDragOver={(e) => { e.preventDefault(); setIsDragging(true); }}
+                        onDragLeave={() => setIsDragging(false)}
+                        onDrop={(e) => {
+                            e.preventDefault();
+                            setIsDragging(false);
+                            const dropped = Array.from(e.dataTransfer.files || []);
+                            const filtered = dropped.filter((file) => {
+                                if (file.size > 5 * 1024 * 1024) {
+                                    alert('5MB 이하 파일만 업로드할 수 있습니다.');
+                                    return false;
+                                }
+                                return true;
+                            });
+                            setFiles((prev) => [...prev, ...filtered]);
+                        }}
+                    >
+                        {/* 파일 미리보기 */}
+                        {files.length > 0 && (
+                            <div className="file_preview_area">
+                                {files.map((file, idx) => {
+                                    const isImage = file.type.startsWith('image/');
+                                    const previewURL = isImage ? URL.createObjectURL(file) : null;
+                                    const type = file.type;
+                                    let icon = '/images/icon_file.png';
+                                    if (type.includes('pdf')) icon = '/images/icon_pdf.png';
+                                    else if (
+                                        type.includes('word') ||
+                                        type.includes('msword') ||
+                                        type.includes('doc')
+                                    )
+                                        icon = '/images/icon_doc.png';
+                                    else if (
+                                        type.includes('excel') ||
+                                        type.includes('spreadsheet') ||
+                                        type.includes('xls')
+                                    )
+                                        icon = '/images/icon_excel.png';
+                                    else if (type.includes('hwp')) icon = '/images/icon_hwp.png';
 
-                    {/* 입력 폼 */}
-                    <form onSubmit={handleSubmit}>
-                        <div className="input_row">
-                            {/* 파일 추가 버튼 */}
-                            <label className="add_btn">
-                                <span className="material-symbols-outlined">attach_file</span>
-                                <input
-                                    type="file"
-                                    multiple
-                                    style={{ display: 'none' }}
-                                    onChange={handleFileUpload}
+                                    return (
+                                        <div className="file_item" key={idx}>
+                                            {isImage ? (
+                                                <img
+                                                    className="thumb"
+                                                    src={previewURL}
+                                                    alt={file.name}
+                                                    onClick={() => setPreviewImage(previewURL)}
+                                                    style={{ cursor: 'pointer' }}
+                                                />
+                                            ) : (
+                                                <img className="file_icon" src={icon} alt="file icon" />
+                                            )}
+                                            <span className="file_name">{file.name}</span>
+                                            <button
+                                                type="button"
+                                                className="file_remove_btn"
+                                                onClick={() => removeFile(idx)}
+                                            >
+                                                ×
+                                            </button>
+                                        </div>
+                                    );
+                                })}
+                            </div>
+                        )}
+                        {/* 입력 폼 */}
+                        <form onSubmit={handleSubmit}>
+                            <div className="input_row">
+                                {/* 파일 추가 버튼 */}
+                                <label className="add_btn">
+                                    <span className="material-symbols-outlined">attach_file</span>
+                                    <input
+                                        type="file"
+                                        multiple
+                                        style={{ display: 'none' }}
+                                        onChange={handleFileUpload}
+                                    />
+                                </label>
+
+                                {/* 텍스트 입력 */}
+                                <textarea
+                                    name="message"
+                                    ref={textareaRef}
+                                    value={message}
+                                    onChange={handleInputChange}
+                                    onKeyDown={handleKeyDown}
+                                    placeholder="메시지를 입력하세요…"
                                 />
-                            </label>
 
-                            {/* 텍스트 입력 */}
-                            <textarea
-                                name="message"
-                                ref={textareaRef}
-                                value={message}
-                                onChange={handleInputChange}
-                                onKeyDown={handleKeyDown}
-                                placeholder="메시지를 입력하세요…"
-                            />
-
-                            {/* 전송 버튼 */}
-                            <button
-                                type="submit"
-                                className="send_btn"
-                                disabled={loading || (!message.trim() && files.length === 0)}
-                            >
-                                <span className="material-symbols-outlined">send</span>
-                            </button>
-                        </div>
-                    </form>
+                                {/* 전송 버튼 */}
+                                <button
+                                    type="submit"
+                                    className="send_btn"
+                                    disabled={loading || (!message.trim() && files.length === 0)}
+                                >
+                                    <span className="material-symbols-outlined">send</span>
+                                </button>
+                            </div>
+                        </form>
+                    </div>
                 </div>
             </div>
-
             {/* 이미지 미리보기 모달 */}
             {previewImage && (
-                <div
-                    className="image_modal_dim"
-                    onClick={() => setPreviewImage(null)}
-                >
-                    <div
-                        className="image_modal_wrap"
-                        onClick={(e) => e.stopPropagation()}
-                    >
+                <div className="image_modal_dim" onClick={() => setPreviewImage(null)}>
+                    <div className="image_modal_wrap" onClick={(e) => e.stopPropagation()}>
                         <img src={previewImage} alt="미리보기" />
                     </div>
                 </div>

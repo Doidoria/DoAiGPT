@@ -6,7 +6,7 @@ import Footer from './Layout/Footer';
 import SettingModal from "./SettingModal";
 import '../css/Layout.scss';
 
-const Layout = ({ children }) => {
+const Layout = () => {
   const [activeChatId, setActiveChatId] = useState(null);
   const [chatRooms, setChatRooms] = useState({});
   const [isCollapsed, setIsCollapsed] = useState(false);
@@ -44,8 +44,8 @@ const Layout = ({ children }) => {
         <Header isCollapsed={isCollapsed} setIsCollapsed={setIsCollapsed} />
         <main className="main">
           <Outlet context={chatProps} />
-          {children}
         </main>
+        <Footer />
         {/* Setting Modal */}
         {showSettingModal && (
           <SettingModal setShowSettingModal={setShowSettingModal} />

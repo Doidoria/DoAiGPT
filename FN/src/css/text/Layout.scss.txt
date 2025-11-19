@@ -1,6 +1,6 @@
 /* 오른쪽 전체 영역 */
 .content_wrap {
-    margin-left: 240px; /* 펼친 사이드바 */
+    margin-left: 200px; /* 펼친 사이드바 */
     height: 100vh;
     display: flex;
     flex-direction: column;
@@ -14,8 +14,31 @@
 
 /* 헤더 fixed 때문에 메인이 가려지지 않도록 */
 .content_wrap .main {
-    padding-top: 52px; /* Header 높이 */
     flex: 1;
     overflow-y: auto;
-    height: calc(100vh - 52px);
+}
+
+/* Chrome, Edge, Safari */
+::-webkit-scrollbar {
+  width: 8px;       /* 스크롤바 너비 */
+  height: 8px;      /* 가로 스크롤 바 */
+}
+
+::-webkit-scrollbar-track {
+  background: transparent; 
+}
+
+::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.15);
+  border-radius: 8px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: rgba(255, 255, 255, 0.25);
+}
+
+/* Firefox */
+* {
+  scrollbar-width: thin;
+  scrollbar-color: rgba(255,255,255,0.2) transparent;
 }

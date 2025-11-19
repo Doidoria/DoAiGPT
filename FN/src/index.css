@@ -23,6 +23,18 @@ a{text-decoration: none;}
     --submit-btn:#ce5bab;
     --chat-title:#969696;
     --chat-title-line:#292929;
+    /* Code block */
+    --code-bg: #181818;
+    --code-border: rgba(255, 255, 255, 0.14);
+    --code-text: #ffffff;
+    /* Scrollbar */
+    --scrollbar-thumb: rgba(255,255,255,0.18);
+    --scrollbar-thumb-hover: rgba(255,255,255,0.3);
+    --scroll-down-btn: rgba(255, 255, 255, 0.829);
+    --scroll-down-btn-hover: rgba(255, 255, 255, 0.603);
+    /* Shadow + subtle layer */
+    --elevation-1: rgba(0,0,0,0.15);
+    --elevation-2: rgba(0,0,0,0.25);
 }
 
 body.theme-light {
@@ -39,6 +51,16 @@ body.theme-light {
     --submit-btn:#ce5bab;
     --chat-title:#808080;
     --chat-title-line:#ececec;
+    /* 코드블록 */
+    --code-bg: #ffffff;
+    --code-border: rgba(0, 0, 0, 0.12);
+    --code-text: #111;
+    --scrollbar-thumb: rgba(0,0,0,0.15);
+    --scrollbar-thumb-hover: rgba(0,0,0,0.27);
+    --scroll-down-btn: rgba(255, 255, 255, 0.12);
+    --scroll-down-btn-hover: rgba(255, 255, 255, 0.12);
+    --elevation-1: rgba(0,0,0,0.1);
+    --elevation-2: rgba(0,0,0,0.18);
 }
 
 .layout {
