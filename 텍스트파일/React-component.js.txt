@@ -1,0 +1,132 @@
+// fileName: useAutosizeTextarea.js
+import { useLayoutEffect, useRef } from 'react';
+
+/**
+ * 텍스트 내용에 따라 textarea의 높이를 자동으로 조절하는 커스텀 훅
+ * @param {React.RefObject<HTMLTextAreaElement>} ref - textarea 요소의 ref 객체
+ * @param {string} value - textarea의 현재 값 (높이 계산을 위해 필요)
+ */
+const useAutosizeTextarea = (ref, value) => {
+    useLayoutEffect(() => {
+        const textarea = ref.current;
+
+        if (textarea) {
+            textarea.style.height = 'auto';
+            let scrollHeight = textarea.scrollHeight;
+            
+            // max-height 처리 (CSS에서 지정된 값을 가져와 사용)
+            // 주의: window.getComputedStyle을 사용하여 CSS의 max-height를 가져옴
+            const computedStyle = window.getComputedStyle(textarea);
+            const maxHeight = parseFloat(computedStyle.maxHeight) || Infinity;
+
+            if (scrollHeight > maxHeight) {
+                scrollHeight = maxHeight;
+                textarea.style.overflowY = 'auto';
+            } else {
+                textarea.style.overflowY = 'hidden';
+            }
+            textarea.style.height = scrollHeight + 'px';
+        }
+    }, [ref, value]);
+};
+
+export default useAutosizeTextarea;
+
+// fileName: useSpeechToText.js
+import { useState, useEffect, useRef } from 'react';
+
+const useSpeechToText = () => {
+  const [text, setText] = useState('');
+  const [isListening, setIsListening] = useState(false);
+  const recognitionRef = useRef(null);
+
+  useEffect(() => {
+    // 브라우저 지원 여부 확인
+    if (typeof window !== 'undefined' && (window.SpeechRecognition || window.webkitSpeechRecognition)) {
+      const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+      recognitionRef.current = new SpeechRecognition();
+      
+      // 설정: true면 말하는 도중에도 텍스트가 나옴, false면 말이 끝나야 나옴 (false가 오류가 적음)
+      recognitionRef.current.continuous = false; 
+      recognitionRef.current.interimResults = false; 
+      recognitionRef.current.lang = 'ko-KR';
+
+      // 음성 인식 결과가 나왔을 때
+      recognitionRef.current.onresult = (event) => {
+        const transcript = event.results[0][0].transcript;
+        console.log("음성 인식 결과:", transcript); // 콘솔에서 확인 가능
+        setText(transcript);
+      };
+
+      // 음성 인식이 끝났을 때 (자동으로 꺼짐)
+      recognitionRef.current.onend = () => {
+        setIsListening(false);
+      };
+
+      // 에러 발생 시
+      recognitionRef.current.onerror = (event) => {
+        console.error('Speech recognition error:', event.error);
+        setIsListening(false);
+      };
+    }
+  }, []);
+
+  const startListening = () => {
+    if (recognitionRef.current) {
+      try {
+        setText(''); // 기존 인식 텍스트 초기화
+        recognitionRef.current.start();
+        setIsListening(true);
+      } catch (error) {
+        console.error("이미 시작되었거나 오류 발생:", error);
+      }
+    } else {
+      alert("이 브라우저는 음성 인식을 지원하지 않습니다. Chrome을 사용해주세요.");
+    }
+  };
+
+  const stopListening = () => {
+    if (recognitionRef.current) {
+      recognitionRef.current.stop();
+      setIsListening(false);
+    }
+  };
+
+  return { text, setText, isListening, startListening, stopListening };
+};
+
+export default useSpeechToText;
+
+// fileName: useThemeMode.js
+import { useEffect, useState } from "react";
+
+const THEME_KEY = "theme";
+
+const applyThemeClass = (theme) => {
+  // body 클래스에 theme-light / theme-dark 적용
+  document.body.classList.remove("theme-dark", "theme-light");
+  document.body.classList.add(`theme-${theme}`);
+};
+
+const useThemeMode = () => {
+  const [theme, setTheme] = useState("dark");
+
+  useEffect(() => {
+    const saved = localStorage.getItem(THEME_KEY) || "dark";
+    setTheme(saved);
+    applyThemeClass(saved);
+  }, []);
+
+  const toggleTheme = () => {
+    setTheme((prev) => {
+      const next = prev === "dark" ? "light" : "dark";
+      localStorage.setItem(THEME_KEY, next);
+      applyThemeClass(next);
+      return next;
+    });
+  };
+
+  return { theme, toggleTheme };
+};
+
+export default useThemeMode;

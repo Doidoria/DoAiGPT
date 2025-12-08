@@ -1,8 +1,8 @@
-// src/pages/main.jsx
 import '../css/main.scss';
 import { useState, useRef, useEffect, useCallback } from 'react';
 import { useOutletContext, useNavigate } from 'react-router-dom';
 import useAutosizeTextarea from '../component/useAutosizeTextarea';
+import useSpeechToText from '../component/useSpeechToText';
 import axios from 'axios';
 
 // 제목 자동 생성 함수 (ChatRoom과 동일 규칙)
@@ -12,7 +12,8 @@ const generateChatTitle = (text) => {
     return first.length > 30 ? first.slice(0, 30) + '…' : first;
 };
 
-const CHAT_API_URL = 'http://localhost:3001/api/chat';
+const BASE_URL = process.env.REACT_APP_API_BASE_URL || '';
+const CHAT_API_URL = `${BASE_URL}/api/chat`;
 
 const Home = () => {
     const {
@@ -30,6 +31,7 @@ const Home = () => {
     const [files, setFiles] = useState([]);
     const [isDragging, setIsDragging] = useState(false);
     const [previewImage, setPreviewImage] = useState(null);
+    const { text, setText, isListening, startListening, stopListening } = useSpeechToText();
 
     useAutosizeTextarea(textareaRef, message);
 
@@ -157,6 +159,17 @@ const Home = () => {
         sendMessage(userMessage, chatId);
     };
 
+    // 음성 인식된 텍스트가 생기면 message 상태 업데이트
+    useEffect(() => {
+        if (text) {
+            // 기존 메시지에 공백을 두고 이어 붙임
+            setMessage((prev) => (prev ? prev + " " + text : text));
+
+            // 중요: 한 번 반영된 텍스트는 훅 상태에서 지워줘야 중복 입력이 안 됨
+            setText('');
+        }
+    }, [text, setText]);
+
     return (
         <section className="section_wrap">
             <div className="main_body_wrap">
@@ -266,6 +279,17 @@ const Home = () => {
                                 onKeyDown={handleKeyDown}
                                 placeholder="적당히 물어보세요."
                             />
+
+                            {/* 마이크 버튼 */}
+                            <button
+                                type="button"
+                                className={`mic_btn ${isListening ? 'active' : ''}`}
+                                onClick={isListening ? stopListening : startListening}
+                            >
+                                <span className="material-symbols-outlined">
+                                    {isListening ? 'mic_off' : 'mic'}
+                                </span>
+                            </button>
 
                             {/* 전송 버튼 */}
                             <button

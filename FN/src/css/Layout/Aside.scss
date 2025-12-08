@@ -48,6 +48,89 @@
         }
     }
 
+    // 채팅 목록
+    .chat_item_row {
+        position: relative;
+        width: 90%;
+        margin: 0 auto;
+        display: flex;
+        align-items: center;
+
+        .chat_room_link {
+            display: flex;
+            align-items: center;
+            gap: 13px;
+            width: 100%;
+            min-width: 0;
+            padding: 5px 10px;
+            border-radius: 8px;
+            transition: background-color 0.2s ease;
+
+            &:hover {
+                background-color: var(--aside-hover);
+            }
+
+            &.active {
+                background-color: var(--aside-hover);
+            }
+
+            .btn_wrap {
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                color: var(--btn-bg);
+                flex-shrink: 0;
+
+                .material-symbols-outlined {
+                    font-variation-settings:
+                        'FILL' 0,
+                        'wght' 400,
+                        'GRAD' 0,
+                        'opsz' 100;
+                }
+            }
+
+            p {
+                flex: 1;
+                min-width: 0;
+                overflow: hidden;
+                text-overflow: ellipsis;
+                white-space: nowrap;
+                color: var(--text-secondary);
+                font-size: 14px;
+            }
+        }
+
+        .chat_delete_btn {
+            position: absolute;
+            right: 10px;
+            top: 50%;
+            transform: translateY(-50%);
+            background: transparent;
+            border: none;
+            padding: 4px;
+            opacity: 0;
+            cursor: pointer;
+            transition: opacity 0.2s ease;
+
+            .material-symbols-outlined {
+                font-size: 18px;
+                color: var(--text-secondary);
+            }
+
+            &:hover .material-symbols-outlined {
+                color: #ff6b6b;
+            }
+        }
+
+        &:hover .chat_delete_btn {
+            opacity: 1;
+        }
+    }
+
+    /* ===========================
+     홈 / 설정 (기존 구조 유지)
+     =========================== */
     .btn_select_wrap {
         display: flex;
         align-items: center;
@@ -70,21 +153,19 @@
             color: var(--btn-bg);
             padding-left: 9px;
             flex-shrink: 0;
-            transition: width 0.25s ease, height 0.25s ease;
 
             .material-symbols-outlined {
                 font-variation-settings:
                     'FILL' 0,
                     'wght' 400,
                     'GRAD' 0,
-                    'opsz' 100
+                    'opsz' 100;
             }
         }
 
         p {
             flex: 1;
             min-width: 0;
-            max-width: 150px;
             overflow: hidden;
             text-overflow: ellipsis;
             font-size: 14px;
@@ -105,8 +186,10 @@
         }
     }
 
-    /* 접힌 상태 전용 스타일 */
+    /* 접힌 상태 */
     &.collapsed {
+        width: 70px;
+
         .chat_list_container {
             .chat_title {
                 display: none;
@@ -114,20 +197,29 @@
         }
 
         p {
-            opacity: 0;
-            pointer-events: none;
+            display: none !important;
         }
 
-    }
-
-    /* 펼친 상태에서는 원래대로 */
-    &.expanded {
-        .btn_wrap {
+        .btn_select_wrap,
+        .chat_item_row .chat_room_link {
+            justify-content: center;
+            padding-left: 0;
+            padding-right: 0;
+            gap: 0;
+        }
+        .btn_select_wrap .btn_wrap {
             padding-left: 0;
         }
+        .chat_delete_btn{
+            display: none;
+        }
+    }
 
+    /* 펼친 상태 */
+    &.expanded {
         p {
             opacity: 1;
+            display: block;
         }
     }
 }

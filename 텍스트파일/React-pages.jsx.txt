@@ -1,3 +1,93 @@
+/* ==========================================================================
+   File: SettingModal.jsx
+   ========================================================================== */
+// src/pages/SettingModal.jsx
+import "../css/SettingModal.scss";
+import useThemeMode from "../component/useThemeMode";
+
+const SettingModal = ({ setShowSettingModal }) => {
+    const { theme, toggleTheme } = useThemeMode();
+
+    const handleDimClick = () => {
+        setShowSettingModal(false);
+    };
+
+    const handleInnerClick = (e) => {
+        e.stopPropagation();
+    };
+
+    return (
+        <div className="setting_modal_dim" onClick={handleDimClick}>
+            <div className="setting_modal_wrap" onClick={handleInnerClick}>
+                <button
+                    className="close_btn"
+                    type="button"
+                    onClick={() => setShowSettingModal(false)}
+                >
+                    <span className="material-symbols-outlined">close</span>
+                </button>
+
+                <h2>환경 설정</h2>
+
+                <div className="theme_switch">
+                    <p>현재 테마: {theme === "dark" ? "🌙 Dark" : "☀️ Light"}</p>
+                    <button type="button" onClick={toggleTheme}>
+                        {theme === "dark" ? "라이트 모드로 전환" : "다크 모드로 전환"}
+                    </button>
+                </div>
+            </div>
+        </div>
+    );
+};
+
+export default SettingModal;
+
+
+/* ==========================================================================
+   File: Header.jsx
+   ========================================================================== */
+import '../../css/Layout/Header.scss'
+import { useNavigate } from 'react-router-dom';
+
+const Header = ({ isCollapsed, setIsCollapsed }) => {
+  const navigate = useNavigate();
+  const handleToggle = () => {
+    setIsCollapsed(!isCollapsed);
+  };
+
+  const handleClose = () => {
+    // window.close();
+    // // (setTimeout을 쓰는 이유는 window.close()가 비동기로 처리될 수 있기 때문입니다)
+    // setTimeout(() => {
+    //     if (!window.closed) {
+    //         alert("브라우저 보안 설정으로 인해 창을 닫을 수 없습니다.");
+    //     }
+    // }, 100);
+
+    // * 브라우저 보안 설정 대신 적용 *
+    navigate('/goodbye');
+  };
+
+  return (
+    <header>
+      <div className="header_wrap">
+        <button type="button" className="hamburger_btn" onClick={handleToggle}
+          style={{ cursor: 'pointer' }}>
+          <span className={isCollapsed ? 'material-symbols-outlined rotated' : 'material-symbols-outlined'}>menu</span>
+        </button>
+        <button type="button" style={{ cursor: 'pointer' }} onClick={handleClose}>
+          <span className="material-symbols-outlined">close</span>
+        </button>
+      </div>
+    </header>
+  )
+}
+export default Header
+
+
+/* ==========================================================================
+   File: ChatRoom.jsx
+   ========================================================================== */
 // src/pages/ChatRoom.jsx
 import '../css/ChatRoom.scss';
 import { useState, useRef, useEffect, useCallback } from 'react';
@@ -109,8 +199,7 @@ const renderRichText = (text, onCopyCode, role) => {
     });
 };
 
-const BASE_URL = process.env.REACT_APP_API_BASE_URL || '';
-const CHAT_API_URL = `${BASE_URL}/api/chat`;
+const CHAT_API_URL = 'http://localhost:3001/api/chat';
 
 const ChatRoom = () => {
     const { id: urlChatId } = useParams();
@@ -693,3 +782,567 @@ const ChatRoom = () => {
 };
 
 export default ChatRoom;
+
+
+/* ==========================================================================
+   File: Layout.jsx
+   ========================================================================== */
+import { Outlet } from "react-router-dom";
+import { useState, useEffect, useRef } from 'react';
+import Aside from './Layout/Aside';
+import Header from './Layout/Header';
+import Footer from './Layout/Footer';
+import SettingModal from "./SettingModal";
+import '../css/Layout.scss';
+
+const Layout = () => {
+  const [activeChatId, setActiveChatId] = useState(null);
+  const [chatRooms, setChatRooms] = useState({});
+  const [isCollapsed, setIsCollapsed] = useState(false);
+  const [showSettingModal, setShowSettingModal] = useState(false);
+  const scrollAreaRef = useRef(null);
+
+  /* 앱 로드 시 LocalStorage 불러오기 */
+  useEffect(() => {
+    const saved = localStorage.getItem("chatRooms");
+    if (saved) {
+      const parsed = JSON.parse(saved);
+      setChatRooms(parsed);
+    }
+  }, []);
+
+  /* chatRooms 바뀔 때마다 자동 저장 */
+  useEffect(() => {
+    localStorage.setItem("chatRooms", JSON.stringify(chatRooms));
+  }, [chatRooms]);
+
+  const chatProps = {
+    activeChatId,
+    setActiveChatId,
+    chatRooms,
+    setChatRooms,
+    isCollapsed,
+    setIsCollapsed,
+    showSettingModal,
+    setShowSettingModal,
+    scrollAreaRef
+  };
+
+  return (
+    <div className={`layout ${isCollapsed ? "collapsed" : ""}`}>
+      <Aside {...chatProps} />
+      <div className="content_wrap">
+        <Header isCollapsed={isCollapsed} setIsCollapsed={setIsCollapsed} />
+        <main className="main" ref={scrollAreaRef}>
+          <Outlet context={chatProps} />
+        </main>
+        <Footer />
+        {/* Setting Modal */}
+        {showSettingModal && (
+          <SettingModal setShowSettingModal={setShowSettingModal} />
+        )}
+      </div>
+    </div>
+  );
+};
+
+export default Layout;
+
+
+/* ==========================================================================
+   File: main.jsx
+   ========================================================================== */
+// src/pages/main.jsx
+import '../css/main.scss';
+import { useState, useRef, useEffect, useCallback } from 'react';
+import { useOutletContext, useNavigate } from 'react-router-dom';
+import useAutosizeTextarea from '../component/useAutosizeTextarea';
+import useSpeechToText from '../component/useSpeechToText';
+import axios from 'axios';
+
+// 제목 자동 생성 함수 (ChatRoom과 동일 규칙)
+const generateChatTitle = (text) => {
+    const first = text.split('\n')[0].trim();
+    if (!first) return '새 채팅';
+    return first.length > 30 ? first.slice(0, 30) + '…' : first;
+};
+
+const CHAT_API_URL = 'http://localhost:3001/api/chat';
+
+const Home = () => {
+    const {
+        activeChatId,
+        setActiveChatId,
+        chatRooms,
+        setChatRooms,
+    } = useOutletContext();
+
+    const navigate = useNavigate();
+    const textareaRef = useRef(null);
+
+    const [message, setMessage] = useState('');
+    const [loading, setLoading] = useState(false);
+    const [files, setFiles] = useState([]);
+    const [isDragging, setIsDragging] = useState(false);
+    const [previewImage, setPreviewImage] = useState(null);
+    const { text, setText, isListening, startListening, stopListening } = useSpeechToText();
+
+    useAutosizeTextarea(textareaRef, message);
+
+    const handleInputChange = useCallback((e) => {
+        setMessage(e.target.value);
+    }, []);
+
+    // 파일 업로드 핸들러
+    const handleFileUpload = (e) => {
+        const selected = Array.from(e.target.files || []);
+        const filtered = selected.filter((file) => {
+            if (file.size > 5 * 1024 * 1024) {
+                alert(`${file.name} 은(는) 5MB를 초과했습니다.`);
+                return false;
+            }
+            return true;
+        });
+        setFiles((prev) => [...prev, ...filtered]);
+    };
+
+    const removeFile = (index) => {
+        setFiles((prev) => prev.filter((_, i) => i !== index));
+    };
+
+    const handleKeyDown = (e) => {
+        // Enter → 전송 / Shift+Enter → 줄바꿈
+        if (e.key === 'Enter' && !e.shiftKey) {
+            e.preventDefault();
+            handleSubmit(e);
+        }
+    };
+
+    // --- 새 채팅 생성 + 전송 ---
+    const sendMessage = async (userMessage, chatId) => {
+        setLoading(true);
+
+        const newHistory = [{ role: 'user', content: userMessage }];
+
+        // ▼ title 오타(ttitle) → title로 수정함
+        setChatRooms((prev) => ({
+            ...prev,
+            [chatId]: {
+                title: generateChatTitle(userMessage),
+                history: [
+                    ...newHistory,
+                    {
+                        role: 'ai',
+                        content: '응답 생성 중...',
+                        loading: true,
+                    },
+                ],
+            },
+        }));
+
+        setActiveChatId(chatId);
+
+        try {
+            const response = await axios.post(CHAT_API_URL, {
+                messages: newHistory,
+            });
+
+            const aiResponse = response.data?.response || '';
+
+            setChatRooms((prev) => {
+                const finalHistory = [
+                    ...newHistory,
+                    {
+                        role: 'ai',
+                        content: aiResponse,
+                        loading: false,
+                    },
+                ];
+
+                return {
+                    ...prev,
+                    [chatId]: {
+                        ...prev[chatId],
+                        history: finalHistory,
+                    },
+                };
+            });
+        } catch (err) {
+            console.error('API 오류:', err);
+
+            setChatRooms((prev) => ({
+                ...prev,
+                [chatId]: {
+                    ...prev[chatId],
+                    history: [
+                        ...newHistory,
+                        {
+                            role: 'ai',
+                            content: '❌ 오류 발생: 응답을 가져올 수 없습니다.',
+                            error: true,
+                            loading: false,
+                        },
+                    ],
+                },
+            }));
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    // --- 폼 submit ---
+    const handleSubmit = (e) => {
+        e.preventDefault();
+        if (loading) return;
+        if (!message.trim()) return;
+
+        const chatId = Date.now().toString();
+        const userMessage = message.trim();
+
+        setMessage('');
+
+        // ChatRoom으로 파일 전달
+        navigate(`/chat/${chatId}`, {
+            state: {
+                initialFiles: files,
+            },
+        });
+
+        setFiles([]);
+
+        sendMessage(userMessage, chatId);
+    };
+
+    // 음성 인식된 텍스트가 생기면 message 상태 업데이트
+    useEffect(() => {
+        if (text) {
+            // 기존 메시지에 공백을 두고 이어 붙임
+            setMessage((prev) => (prev ? prev + " " + text : text));
+
+            // 중요: 한 번 반영된 텍스트는 훅 상태에서 지워줘야 중복 입력이 안 됨
+            setText('');
+        }
+    }, [text, setText]);
+
+    return (
+        <section className="section_wrap">
+            <div className="main_body_wrap">
+                <div className="logo" style={{ marginBottom: '5px' }}>
+                    <h1>DoAi</h1>
+                </div>
+
+                {/* 드래그 영역 */}
+                <div
+                    className={`input_select_wrap ${isDragging ? 'dragging' : ''}`}
+                    onDragOver={(e) => {
+                        e.preventDefault();
+                        setIsDragging(true);
+                    }}
+                    onDragLeave={() => setIsDragging(false)}
+                    onDrop={(e) => {
+                        e.preventDefault();
+                        setIsDragging(false);
+
+                        const dropped = Array.from(e.dataTransfer.files || []);
+                        const filtered = dropped.filter((file) => {
+                            if (file.size > 5 * 1024 * 1024) {
+                                alert('5MB 이하의 파일만 업로드할 수 있습니다.');
+                                return false;
+                            }
+                            return true;
+                        });
+                        setFiles((prev) => [...prev, ...filtered]);
+                    }}
+                >
+                    {/* 파일 미리보기 */}
+                    {files.length > 0 && (
+                        <div className="file_preview_area">
+                            {files.map((file, idx) => {
+                                const isImage = file.type.startsWith('image/');
+                                const previewURL = isImage ? URL.createObjectURL(file) : null;
+
+                                const type = file.type;
+                                let icon = '/images/icon_file.png';
+                                if (type.includes('pdf')) icon = '/images/icon_pdf.png';
+                                else if (
+                                    type.includes('word') ||
+                                    type.includes('msword') ||
+                                    type.includes('doc')
+                                )
+                                    icon = '/images/icon_doc.png';
+                                else if (
+                                    type.includes('excel') ||
+                                    type.includes('spreadsheet') ||
+                                    type.includes('xls')
+                                )
+                                    icon = '/images/icon_excel.png';
+                                else if (type.includes('hwp')) icon = '/images/icon_hwp.png';
+
+                                return (
+                                    <div className="file_item" key={idx}>
+                                        {isImage ? (
+                                            <img
+                                                className="thumb"
+                                                src={previewURL}
+                                                alt={file.name}
+                                                onClick={() => setPreviewImage(previewURL)}
+                                                style={{ cursor: 'pointer' }}
+                                            />
+                                        ) : (
+                                            <img
+                                                className="file_icon"
+                                                src={icon}
+                                                alt="file icon"
+                                            />
+                                        )}
+
+                                        <span className="file_name">{file.name}</span>
+                                        <button
+                                            type="button"
+                                            className="file_remove_btn"
+                                            onClick={() => removeFile(idx)}
+                                        >
+                                            ×
+                                        </button>
+                                    </div>
+                                );
+                            })}
+                        </div>
+                    )}
+
+                    {/* 입력창 */}
+                    <form onSubmit={handleSubmit}>
+                        <div className="input_row">
+                            {/* 파일 추가 버튼 */}
+                            <label className="add_btn">
+                                <span className="material-symbols-outlined">attach_file</span>
+                                <input
+                                    type="file"
+                                    multiple
+                                    style={{ display: 'none' }}
+                                    onChange={handleFileUpload}
+                                />
+                            </label>
+
+                            {/* 텍스트 입력 */}
+                            <textarea
+                                name="message"
+                                value={message}
+                                ref={textareaRef}
+                                onChange={handleInputChange}
+                                onKeyDown={handleKeyDown}
+                                placeholder="적당히 물어보세요."
+                            />
+
+                            {/* 마이크 버튼 */}
+                            <button
+                                type="button"
+                                className={`mic_btn ${isListening ? 'active' : ''}`}
+                                onClick={isListening ? stopListening : startListening}
+                            >
+                                <span className="material-symbols-outlined">
+                                    {isListening ? 'mic_off' : 'mic'}
+                                </span>
+                            </button>
+
+                            {/* 전송 버튼 */}
+                            <button
+                                type="submit"
+                                className="send_btn"
+                                disabled={!message.trim() || loading}
+                            >
+                                <span className="material-symbols-outlined">send</span>
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+
+            {/* 이미지 미리보기 모달 */}
+            {previewImage && (
+                <div
+                    className="image_modal_dim"
+                    onClick={() => setPreviewImage(null)}
+                >
+                    <div
+                        className="image_modal_wrap"
+                        onClick={(e) => e.stopPropagation()}
+                    >
+                        <img src={previewImage} alt="미리보기" />
+                    </div>
+                </div>
+            )}
+        </section>
+    );
+};
+
+export default Home;
+
+
+/* ==========================================================================
+   File: Goodbye.jsx
+   ========================================================================== */
+// src/pages/Goodbye.jsx
+import { Link } from 'react-router-dom';
+import '../css/main.scss'; // 기존 스타일 재사용
+
+const Goodbye = () => {
+    // 인라인 스타일로 간단히 레이아웃 잡기 (기존 변수 활용)
+    const containerStyle = {
+        display: 'flex',
+        flexDirection: 'column',
+        justifyContent: 'center',
+        alignItems: 'center',
+        height: '100vh',
+        background: 'var(--bg-main)', // 메인 배경색
+        color: 'var(--text-primary)', // 메인 폰트색
+        textAlign: 'center'
+    };
+
+    const buttonStyle = {
+        marginTop: '30px',
+        padding: '12px 24px',
+        background: 'var(--submit-btn)', // 전송 버튼색 활용
+        color: '#fff',
+        borderRadius: '8px',
+        textDecoration: 'none',
+        fontWeight: 'bold',
+        fontSize: '16px',
+        display: 'inline-flex',
+        alignItems: 'center',
+        gap: '8px'
+    };
+
+    return (
+        <div style={containerStyle}>
+            <span 
+                className="material-symbols-outlined" 
+                style={{ fontSize: '64px', marginBottom: '20px', color: 'var(--text-secondary)' }}
+            >
+                waving_hand
+            </span>
+            <h1 style={{ fontSize: '28px', marginBottom: '10px' }}>이용해 주셔서 감사합니다</h1>
+            <p style={{ color: 'var(--text-secondary)', fontSize: '16px' }}>
+                DoAi와의 대화가 즐거우셨기를 바랍니다.<br />
+                언제든지 다시 돌아오세요!
+            </p>
+
+            <Link to="/" style={buttonStyle}>
+                <span className="material-symbols-outlined">restart_alt</span>
+                다시 시작하기
+            </Link>
+        </div>
+    );
+};
+
+export default Goodbye;
+
+
+/* ==========================================================================
+   File: Aside.jsx
+   ========================================================================== */
+import '../../css/Layout/Aside.scss';
+import { Link } from 'react-router-dom';
+
+const Aside = ({
+  activeChatId,
+  setActiveChatId,
+  chatRooms,
+  setChatRooms,
+  isCollapsed,
+  setShowSettingModal,
+}) => {
+  const chatRoomIds = Object.keys(chatRooms).reverse();
+
+  const handleChatClick = (id) => {
+    setActiveChatId(id);
+  };
+
+  const handleDeleteChat = (id) => {
+    if (!window.confirm('이 채팅을 삭제할까요?')) return;
+
+    setChatRooms((prev) => {
+      const next = { ...prev };
+      delete next[id];
+      return next;
+    });
+
+    if (activeChatId === id) {
+      setActiveChatId(null);
+    }
+  };
+
+  return (
+    <aside className={`side_menu_wrap ${isCollapsed ? 'collapsed' : 'expanded'}`}>
+      <div className="logo" style={{ marginTop: '5px' }}>
+        <h3>DoAi</h3>
+      </div>
+
+      <div className="menu_wrap">
+        {/* 상단 영역 */}
+        <div className="menu_top_wrap chat_list_container">
+          {/* 홈 버튼 - 예전처럼 btn_select_wrap 사용 */}
+          <Link
+            to="/"
+            className="btn_select_wrap"
+            onClick={() => setActiveChatId(null)}
+          >
+            <div className="btn_wrap">
+              <span className="material-symbols-outlined">home</span>
+            </div>
+            <p>홈</p>
+          </Link>
+
+          <div className="chat_title">
+            <span>내 채팅 목록</span>
+          </div>
+
+          {/* 채팅 목록 - 새 구조 (chat_item_row + chat_room_link) */}
+          {chatRoomIds.map((id) => (
+            <div className="chat_item_row" key={id}>
+              <Link
+                to={`/chat/${id}`}
+                className={`chat_room_link ${id === activeChatId ? 'active' : ''}`}
+                onClick={() => handleChatClick(id)}
+              >
+                <div className="btn_wrap">
+                  <span className="material-symbols-outlined">edit_square</span>
+                </div>
+                <p>{chatRooms[id].title}</p>
+              </Link>
+
+              {/* 삭제 버튼 (hover 시 노출) */}
+              <button
+                type="button"
+                className="chat_delete_btn"
+                onClick={(e) => {
+                  e.preventDefault();
+                  e.stopPropagation();
+                  handleDeleteChat(id);
+                }}
+              >
+                <span className="material-symbols-outlined">delete</span>
+              </button>
+            </div>
+          ))}
+        </div>
+
+        {/* 하단 설정 */}
+        <div className="menu_bottom_wrap">
+          <Link
+            to="#"
+            className="btn_select_wrap settings"
+            onClick={(e) => {
+              e.preventDefault();
+              setShowSettingModal(true);
+            }}
+          >
+            <span className="material-symbols-outlined">settings</span>
+          </Link>
+        </div>
+      </div>
+    </aside>
+  );
+};
+
+export default Aside;

@@ -2,7 +2,6 @@ import { Outlet } from "react-router-dom";
 import { useState, useEffect, useRef } from 'react';
 import Aside from './Layout/Aside';
 import Header from './Layout/Header';
-import Footer from './Layout/Footer';
 import SettingModal from "./SettingModal";
 import '../css/Layout.scss';
 
@@ -47,7 +46,6 @@ const Layout = () => {
         <main className="main" ref={scrollAreaRef}>
           <Outlet context={chatProps} />
         </main>
-        <Footer />
         {/* Setting Modal */}
         {showSettingModal && (
           <SettingModal setShowSettingModal={setShowSettingModal} />
