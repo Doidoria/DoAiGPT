@@ -43,7 +43,7 @@ React + Node.js + OpenAI API 기반의 ChatGPT 웹 서비스입니다.<br>
 | LocalStorage  | 테마 유지               |
 | 커스텀 훅         | `useThemeMode` 로 제어 |
 
-🗂 채팅방 관리
+## 채팅방 관리
 | 기능          | 설명                 |
 | ----------- | ------------------ |
 | 채팅 목록 저장    | LocalStorage 자동 저장 |
