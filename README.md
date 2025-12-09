@@ -1,4 +1,4 @@
-# DoAi — ChatGPT Web Application
+# DoAi — ChatGPT
 React + Node.js + OpenAI API 기반의 ChatGPT 웹 서비스입니다.<br>
 파일 업로드, 음성 입력, 다크/라이트 테마, 채팅방 관리, 요약 기능 등을 갖춘 프로젝트입니다.
 
