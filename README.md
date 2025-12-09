@@ -11,7 +11,7 @@ React + Node.js + OpenAI API 기반의 ChatGPT 웹 서비스입니다.<br>
 | **Backend**  | Node.js (Express), OpenAI SDK                  |
 | **배포 환경**    | AWS EC2 + Nginx Reverse Proxy                  |
 | **기능 요약**    | 챗봇 대화, 코드 하이라이트, 음성 입력, 파일 업로드, 테마 전환, 채팅 저장 등 |
-| **접속 링크**    | http://www.hidoai.store |
+| **접속 링크**    | <a href="http://www.hidoai.store" target="_blank">http://www.hidoai.store</a>                  |
 
 ## 주요 기능
 <ul>
